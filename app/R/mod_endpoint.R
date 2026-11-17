@@ -6,37 +6,44 @@ mod_endpoint_ui <- function(id, endpoint) {
     sidebar = bslib::sidebar(
       width = 330,
       shiny::h5(paste(endpoint, "model choice")),
-      shiny::radioButtons(ns("approach"), "Treatment-effect approach", c(
+      shiny::radioButtons(ns("approach"), help_label("Treatment-effect approach", "Independent fits: each arm gets its own curve. Most flexible, but needs data on both arms. Joint fit: one model for both arms with arm as a covariate. Fewer parameters, and it assumes the arms differ in a simple, consistent way. Comparator curve + hazard ratio: fit only the comparator, then apply a hazard ratio to get the intervention. Use this when you have no patient data for the intervention."), c(
         "Independent fits per arm" = "indep",
         "Joint fit (arm as covariate)" = "joint",
         "Comparator curve + hazard ratio" = "hr")),
-      shiny::selectInput(ns("comp_model"), "Comparator model (joint: both arms)", NULL),
+      shiny::selectInput(ns("comp_model"), help_label("Comparator model (joint: both arms)", "The statistical distribution used to extend survival over time, such as exponential, Weibull or log-normal. Different choices can give very different long-term results, so compare them on the Fit statistics and Curves tabs."), NULL),
       shiny::conditionalPanel(
         sprintf("input['%s'] == 'indep'", ns("approach")),
         shiny::selectInput(ns("int_model"), "Intervention model", NULL)
       ),
       shiny::checkboxInput(ns("hybrid"), "Hybrid: KM to cut-point, then model", FALSE),
+      shiny::helpText("Uses the observed curve up to the cut-point, then the fitted model after it."),
       shiny::conditionalPanel(
         sprintf("input['%s']", ns("hybrid")),
-        shiny::numericInput(ns("cut"), "Cut-point (years)", 1, min = 0.05, step = 0.25),
+        shiny::numericInput(ns("cut"), help_label("Cut-point (years)", "The time after which the fitted model takes over from the observed curve. Choose a time where the observed data are still reliable, with enough patients still at risk."), 1, min = 0.05, step = 0.25),
         shiny::uiOutput(ns("cut_info"))
       ),
       shiny::conditionalPanel(
         sprintf("input['%s'] == 'hr'", ns("approach")),
         shiny::hr(),
-        shiny::radioButtons(ns("hr_src"), "HR source",
+        shiny::radioButtons(ns("hr_src"), help_label("HR source", "Enter: type a hazard ratio you already have, such as from a published trial or a network meta-analysis. Cox model: estimate it from the data you loaded."),
                             c("Enter (e.g. NMA, published)" = "manual", "Cox model on these data" = "cox")),
         shiny::conditionalPanel(
           sprintf("input['%s'] == 'manual'", ns("hr_src")),
-          shiny::numericInput(ns("hr"), "HR point estimate", 0.7, min = 0.01, step = 0.01),
-          shiny::numericInput(ns("hr_lo"), "95% interval, lower", 0.55, min = 0.01, step = 0.01),
+          shiny::numericInput(ns("hr"), help_label("HR point estimate", "Below 1 means the intervention lowers the risk of the event compared with the comparator."), 0.7, min = 0.01, step = 0.01),
+          shiny::numericInput(ns("hr_lo"), help_label("95% interval, lower", "The 95% interval shows how uncertain the HR is. It is used in the sensitivity analyses (DSA and PSA)."), 0.55, min = 0.01, step = 0.01),
           shiny::numericInput(ns("hr_hi"), "95% interval, upper", 0.89, min = 0.01, step = 0.01),
-          shiny::radioButtons(ns("hr_dir"), "The HR is reported as", c(
+          shiny::radioButtons(ns("hr_dir"), help_label("The HR is reported as", "Pick the direction the source uses. If it reports comparator vs intervention, the app inverts it for you."), c(
             "Intervention vs comparator" = "int_vs_comp",
             "Comparator vs intervention (will be inverted)" = "comp_vs_int"))
         ),
         shiny::uiOutput(ns("hr_info"))
       )
+    ),
+    intro_card(
+      purpose = paste0("Choose how the ", endpoint, " curve is built for each arm, and test whether it can be trusted beyond the trial data."),
+      do = "In the left panel choose the approach and a model for each arm. Then open Fit statistics to compare models, Curves to see them against the observed data, and Hazards and PH diagnostics to check the assumptions.",
+      check = "The chosen curve follows the observed data AND its long-term tail is clinically believable. The model with the best statistical fit is not always the best extrapolation.",
+      next_step = if (identical(endpoint, "OS")) "the Progression-free survival tab." else "the Clinical plausibility tab."
     ),
     bslib::navset_card_tab(
       bslib::nav_panel("Fit statistics",

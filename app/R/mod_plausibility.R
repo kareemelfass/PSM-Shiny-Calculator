@@ -5,13 +5,19 @@ mod_plausibility_ui <- function(id) {
   bslib::layout_sidebar(
     sidebar = bslib::sidebar(
       width = 330,
-      shiny::textInput(ns("years"), "Landmark years", "1, 2, 5, 10, 20"),
+      shiny::textInput(ns("years"), help_label("Landmark years", "Time points, in years, at which survival is reported. Separate them with commas."), "1, 2, 5, 10, 20"),
       shiny::h6("Clinical benchmark ranges for OS (%), one per landmark"),
       shiny::textInput(ns("bench_comp"), "Comparator", "", placeholder = "e.g. 60-75, 35-50, 8-15, 1-4, 0-1"),
       shiny::textInput(ns("bench_int"), "Intervention", "", placeholder = "same format"),
       shiny::helpText("Ranges from clinical experts, registries or longer follow-up of related trials.",
                       "Record their source. Leave blank to skip the check."),
       shiny::numericInput(ns("xmax"), "Plot to year", 30, min = 1)
+    ),
+    intro_card(
+      purpose = "Check that the long-term predictions are believable, using clinical knowledge and not only fit statistics.",
+      do = "Enter the landmark years you want to see. If you have them, enter expected survival ranges from clinical experts, registries or longer follow-up of related trials. Then review the curves, the hazard chart and the landmark table.",
+      check = "Survival at each landmark falls inside the expected range, and the modelled risk of death does not drop below that of the general population.",
+      next_step = "the Treatment effects tab."
     ),
     bslib::layout_columns(
       col_widths = c(6, 6),

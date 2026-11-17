@@ -5,18 +5,25 @@ mod_tot_ui <- function(id) {
   arm_controls <- function(a, title, cap_default, beyond_default) {
     bslib::card(
       bslib::card_header(shiny::textOutput(ns(paste0("title_", a)), inline = TRUE)),
-      shiny::radioButtons(ns(paste0("method_", a)), "Time-on-treatment curve",
+      shiny::radioButtons(ns(paste0("method_", a)), help_label("Time-on-treatment curve", "Equal to PFS: patients stay on treatment for as long as they are progression-free. Simple, and useful when there are no time-on-treatment data. Fitted: a curve fitted to your time-on-treatment (ToT) data. Needs ToT rows in the data file."),
                           c("Equal to PFS" = "pfs", "Fitted to ToT data" = "fit")),
       shiny::conditionalPanel(
         sprintf("input['%s'] == 'fit'", ns(paste0("method_", a))),
         shiny::selectInput(ns(paste0("model_", a)), "ToT model", NULL)
       ),
-      shiny::numericInput(ns(paste0("cap_", a)), "Maximum treatment duration (years); blank = none",
+      shiny::numericInput(ns(paste0("cap_", a)), help_label("Maximum treatment duration (years); blank = none", "A stopping rule, such as a 2-year course. Leave blank if treatment continues until it stops working."),
                           cap_default, min = 0, step = 0.25),
-      shiny::checkboxInput(ns(paste0("beyond_", a)), "Treatment beyond progression allowed", beyond_default)
+      shiny::checkboxInput(ns(paste0("beyond_", a)), "Treatment beyond progression allowed", beyond_default),
+      shiny::helpText("If ticked, patients can stay on treatment after their disease progresses.")
     )
   }
   shiny::tagList(
+    intro_card(
+      purpose = "Set how long patients stay on treatment. Drug costs follow time on treatment, not progression-free survival.",
+      do = "For each arm choose whether treatment time equals PFS or is fitted to your time-on-treatment data. Add a maximum duration if there is a stopping rule, and say whether treatment can continue after progression.",
+      check = "The plot looks sensible: time on treatment never goes above overall survival, and a stopping rule shows as a cut-off.",
+      next_step = "the Costs and utilities tab."
+    ),
     bslib::layout_columns(
       col_widths = c(6, 6),
       arm_controls("comp", "Comparator", NA, FALSE),

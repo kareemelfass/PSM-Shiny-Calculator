@@ -10,15 +10,21 @@ mod_data_ui <- function(id) {
       shiny::conditionalPanel(
         sprintf("input['%s'] == 'upload'", ns("src")),
         shiny::fileInput(ns("file"), "CSV columns: arm, endpoint, time, event (+ optional id)", accept = ".csv"),
-        shiny::selectInput(ns("unit"), "Time unit in file",
+        shiny::selectInput(ns("unit"), help_label("Time unit in file", "The unit your time column uses. The app converts everything to years."),
                            c("days", "weeks", "months", "years"), "months")
       ),
-      shiny::selectInput(ns("comp"), "Comparator arm", NULL),
-      shiny::selectInput(ns("int"), "Intervention arm", NULL),
+      shiny::selectInput(ns("comp"), help_label("Comparator arm", "The arm you compare against, for example standard care."), NULL),
+      shiny::selectInput(ns("int"), help_label("Intervention arm", "The new treatment being assessed. Choose (no data: use HR) if you have no patient data for it and will apply a hazard ratio instead, for example from a network meta-analysis."), NULL),
       shiny::helpText("endpoint must be OS, PFS or ToT. event: 1 = event, 0 = censored.",
                       "Optional 'id' column: links each patient's OS, PFS and ToT rows (used by the PSA bootstrap).",
                       "The intervention arm may have no data if you will apply an HR (e.g. from an NMA)."),
       shiny::downloadButton(ns("dl_example"), "Download example CSV", class = "btn-sm")
+    ),
+    intro_card(
+      purpose = "Load the patient-level survival data, and tell the app which arm is the comparator and which is the intervention.",
+      do = "Use the synthetic example, or choose Upload CSV and set the time unit. Then pick the comparator and intervention arms in the left panel. If you only have a published curve and no patient data, use the reconstruction box at the bottom of this tab.",
+      check = "The arm names, patient counts and event counts look right, and the Kaplan-Meier curves look like the trial you expect.",
+      next_step = "Overall survival, then Progression-free survival."
     ),
     bslib::layout_columns(
       col_widths = c(5, 7),
@@ -31,6 +37,7 @@ mod_data_ui <- function(id) {
     ),
     bslib::card(
       bslib::card_header("Reconstruct patient data from a published KM curve (Guyot 2012)"),
+      shiny::helpText("Use this when you only have a published figure. Steps: (1) Digitise the curve with a plot-digitising tool and save time and survival, with survival in percent as in the example file. (2) Save the numbers-at-risk table as time and n. (3) Upload both files, or tick the example box to see how it works. (4) Set the arm name, endpoint and time unit. (5) Click Reconstruct and check the plot. (6) Click Add to dataset."),
       bslib::layout_columns(
         col_widths = c(4, 4, 4),
         shiny::div(

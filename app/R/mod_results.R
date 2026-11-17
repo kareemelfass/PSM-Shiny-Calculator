@@ -3,6 +3,12 @@
 mod_results_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+    intro_card(
+      purpose = "See the model's main answer: the costs, QALYs and ICER of the intervention compared with the comparator.",
+      do = "Read the summary boxes and the table, then the interpretation text. Use the state occupancy charts to see how patients are spread over progression-free, progressed and dead over time.",
+      check = "The result makes sense given your inputs. Then test it: Scenarios and DSA change one thing at a time, PSA changes everything at once, and Validation lists warnings.",
+      next_step = "Scenarios and DSA."
+    ),
     shiny::uiOutput(ns("boxes")),
     bslib::layout_columns(
       col_widths = c(7, 5),
@@ -89,6 +95,12 @@ mod_results_server <- function(id, model) {
 
 mod_export_ui <- function(id) {
   ns <- shiny::NS(id)
+  shiny::tagList(
+  intro_card(
+    purpose = "Save everything the app has calculated into one Excel file, so you can keep it, check it and share it.",
+    do = "Run the scenarios, DSA, PSA and waning explorer first if you want their results included. Then click Download Excel workbook.",
+    check = "Download before you close or refresh the page, because the browser version does not keep your inputs."
+  ),
   bslib::card(
     bslib::card_header("Export"),
     shiny::p("One Excel workbook with inputs, results, full traces for both arms, curves,",
@@ -96,6 +108,7 @@ mod_export_ui <- function(id) {
     shiny::downloadButton(ns("xlsx"), "Download Excel workbook", class = "btn-primary"),
     shiny::p(class = "small text-muted mt-3",
              "Every number can be reproduced outside Shiny: see run_model() in R/fct_spec.R and the README.")
+  )
   )
 }
 

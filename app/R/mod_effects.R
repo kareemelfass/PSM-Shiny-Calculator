@@ -9,7 +9,7 @@ mod_effects_ui <- function(id) {
     sidebar = bslib::sidebar(
       width = 360,
       shiny::h5("Treatment-effect duration"),
-      shiny::radioButtons(ns("type"), NULL, c(
+      shiny::radioButtons(ns("type"), help_label("Effect structure", "Sustained: the benefit lasts for the whole horizon. This needs evidence of durable benefit. Equal hazards: from a chosen time both arms have the same risk, and the survival already gained is kept. Gradual: the hazard ratio moves in a straight line toward a target. Stop and drop: the benefit vanishes at once. This is an extreme test, not a base case."), c(
         "Sustained effect (no waning)" = "none",
         "Equal hazards from a time point" = "equal",
         "Gradual equalisation (HR moves to target)" = "gradual",
@@ -17,13 +17,13 @@ mod_effects_ui <- function(id) {
       shiny::uiOutput(ns("role")),
       shiny::conditionalPanel(
         sprintf("input['%s'] != 'none'", ns("type")),
-        shiny::radioButtons(ns("anchor"), "Count waning time from", c(
+        shiny::radioButtons(ns("anchor"), help_label("Count waning time from", "Treatment start: years since the model starts. Treatment stop: years after the maximum treatment duration set on the Time on treatment tab. For example, an effect that ends 3 years after a 2-year course stops means year 5."), c(
           "Treatment start (model start)" = "start",
           "Treatment stop (maximum duration, Time on treatment tab)" = "tx_stop")),
-        shiny::numericInput(ns("start"), "Waning starts after (years)", 5, min = 0, step = 0.5),
+        shiny::numericInput(ns("start"), help_label("Waning starts after (years)", "How many years after the chosen starting point the effect begins to fade."), 5, min = 0, step = 0.5),
         shiny::conditionalPanel(
           sprintf("input['%s'] == 'gradual'", ns("type")),
-          shiny::numericInput(ns("end"), "Fully waned after (years)", 7, min = 0, step = 0.5)
+          shiny::numericInput(ns("end"), help_label("Fully waned after (years)", "The time by which the effect has completely faded. Only used for gradual equalisation."), 7, min = 0, step = 0.5)
         ),
         shiny::uiOutput(ns("abs_time")),
         shiny::checkboxInput(ns("apply_os"), "Apply to OS", TRUE),
@@ -32,7 +32,7 @@ mod_effects_ui <- function(id) {
           open = FALSE,
           bslib::accordion_panel(
             "Advanced",
-            shiny::numericInput(ns("target_hr"), "HR after waning (1 = no relative effect left)",
+            shiny::numericInput(ns("target_hr"), help_label("HR after waning (1 = no relative effect left)", "The hazard ratio the intervention ends up at. 1 means both arms end with the same risk. Use a value below 1 to model partial waning."),
                                 1, min = 0.05, step = 0.05),
             shiny::numericInput(ns("frailty"), "Frailty variance (0 = wane population hazards)",
                                 0, min = 0, step = 0.1),
@@ -44,16 +44,22 @@ mod_effects_ui <- function(id) {
           )
         )
       ),
-      shiny::textAreaInput(ns("rationale"), "Evidence and justification", "", rows = 4,
+      shiny::textAreaInput(ns("rationale"), help_label("Evidence and justification", "Reviewers expect a reason for the chosen duration. Say what evidence supports it and which other timings you tested."), "", rows = 4,
         placeholder = "e.g. Treatment stops at 2 years; no long-term data beyond year 4; mechanism does not support lifetime effect; scenarios tested at 3 and 5 years after stopping."),
       shiny::hr(),
       shiny::h5("Treatment crossover"),
-      shiny::radioButtons(ns("basis"), "Comparator OS represents", c(
+      shiny::radioButtons(ns("basis"), help_label("Comparator OS represents", "Observed ITT: the comparator data include patients who switched to the intervention, so the comparator curve already contains some benefit. Adjusted: the data were corrected to show what would have happened with no switching. Costs must follow the same choice."), c(
         "Observed ITT (patients could switch to the intervention)" = "itt",
         "Adjusted to a no-switching pathway (RPSFTM, IPCW, two-stage)" = "adjusted")),
       shiny::checkboxInput(ns("subseq_int"),
                            "Comparator subsequent-therapy cost includes the intervention", TRUE),
       shiny::helpText("Survival and costs must describe the same treatment pathway (Doc 10).")
+    ),
+    intro_card(
+      purpose = "Decide how long the treatment benefit lasts after the trial data run out, and how crossover is handled. This choice can change the ICER a lot.",
+      do = "Pick an effect structure. If you pick anything other than sustained, set when the effect starts to fade and whether that time counts from treatment start or treatment stop. Write your evidence in the justification box. Then use the Waning explorer at the bottom to test other timings and structures.",
+      check = "The timeline and the absolute OS advantage chart look reasonable, and your justification explains why the assumption is believable. Equal hazards from a time point is a common pragmatic base case. Stop and drop is a stress test only.",
+      next_step = "the Time on treatment tab."
     ),
     bslib::card(bslib::card_header("Timeline"), shiny::plotOutput(ns("timeline"), height = 170)),
     bslib::layout_columns(
@@ -74,7 +80,7 @@ mod_effects_ui <- function(id) {
       bslib::card_header("Waning explorer: timings x structures"),
       bslib::layout_columns(
         col_widths = c(4, 3, 3, 2),
-        shiny::textInput(ns("ex_starts"), "Start times to test (same anchor as above)", "2, 3, 5, 7, 10"),
+        shiny::textInput(ns("ex_starts"), help_label("Start times to test (same anchor as above)", "Years separated by commas. The explorer runs every effect structure at each of these start times."), "2, 3, 5, 7, 10"),
         shiny::numericInput(ns("ex_width"), "Gradual: years to full waning", 2, min = 0.25, step = 0.5),
         shiny::radioButtons(ns("ex_out"), "Show", c("ICER" = "icer", "Inc. QALYs" = "inc_qaly",
                                                    "NMB" = "nmb"), inline = TRUE),

@@ -34,6 +34,8 @@ ui <- page_navbar(
   title = "Partitioned survival model V3",
   theme = bs_theme(version = 5, preset = "shiny", primary = "#3E5C8A"),
   fillable = FALSE,
+  id = "main_nav",
+  nav_panel("Start here", start_here_ui()),
   nav_panel("Settings", mod_settings_ui("settings")),
   nav_panel("Data", mod_data_ui("data")),
   nav_menu("Survival",
@@ -57,6 +59,15 @@ ui <- page_navbar(
 )
 
 server <- function(input, output, session) {
+  # "Start here" buttons: each jumps to the tab named on the right
+  jump <- c(go_settings = "Settings", go_data = "Data", go_os = "Overall survival",
+            go_plaus = "Clinical plausibility", go_effects = "Treatment effects",
+            go_tot = "Time on treatment", go_costs = "Costs and utilities",
+            go_results = "Base case", go_valid = "Validation")
+  lapply(names(jump), function(id) {
+    observeEvent(input[[id]], nav_select("main_nav", jump[[id]]), ignoreInit = TRUE)
+  })
+
   settings <- mod_settings_server("settings", example_dir)
   data <- mod_data_server("data", example_dir)
   os <- mod_endpoint_server("os", "OS", data, settings)

@@ -3,6 +3,12 @@
 mod_scenarios_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+    intro_card(
+      purpose = "Test how much the conclusion depends on your assumptions, one change at a time.",
+      do = "Scenarios: change any input on another tab, give the scenario a name, and click Save current result. The first one you save is the base case. DSA: click Run DSA to move each input across a plausible range and rank them in a tornado chart.",
+      check = "Which inputs move the result most, and whether any scenario flips the decision at your willingness-to-pay threshold.",
+      next_step = "the PSA tab."
+    ),
     bslib::card(
       bslib::card_header("Scenario analysis"),
       bslib::layout_columns(
@@ -20,10 +26,10 @@ mod_scenarios_ui <- function(id) {
       bslib::layout_columns(
         col_widths = c(4, 4, 4),
         shiny::div(
-          shiny::sliderInput(ns("cost_pct"), "Cost range (+/- %)", 5, 50, 20),
-          shiny::sliderInput(ns("wane_delta"), "Waning timing range (+/- years)", 0, 5, 2, step = 0.5)
+          shiny::sliderInput(ns("cost_pct"), help_label("Cost range (+/- %)", "Every cost input is moved up and down by this percentage."), 5, 50, 20),
+          shiny::sliderInput(ns("wane_delta"), help_label("Waning timing range (+/- years)", "Years added to and taken from the waning start time. Only matters if waning is switched on."), 0, 5, 2, step = 0.5)
         ),
-        shiny::radioButtons(ns("outcome"), "Outcome", c("ICER" = "icer", "Net monetary benefit" = "nmb"), inline = TRUE),
+        shiny::radioButtons(ns("outcome"), help_label("Outcome", "ICER: the cost per QALY gained. NMB: net monetary benefit, which is QALYs times willingness to pay, minus cost. NMB is easier to read when the ICER jumps around."), c("ICER" = "icer", "Net monetary benefit" = "nmb"), inline = TRUE),
         shiny::actionButton(ns("run_dsa"), "Run DSA", class = "btn-primary")
       ),
       shiny::helpText("HRs use their 95% interval; utilities use +/- 1.96 SE; discount rates 0% to twice the base.",
@@ -104,17 +110,17 @@ mod_psa_ui <- function(id) {
   bslib::layout_sidebar(
     sidebar = bslib::sidebar(
       width = 330,
-      shiny::radioButtons(ns("surv"), "Survival curve uncertainty", c(
+      shiny::radioButtons(ns("surv"), help_label("Survival curve uncertainty", "Parameter covariance: draws new curve parameters from the uncertainty of the fitted models. Fast. Bootstrap: resamples the patients and refits the models in every run. Slower, and it keeps each patient's OS, PFS and ToT rows together when the data have an id column. None: the curves stay fixed, so only the other inputs vary."), c(
         "Parameter covariance (multivariate normal)" = "mvn",
         "Bootstrap patients and refit" = "boot",
         "None: curves fixed (V1)" = "none")),
       shiny::uiOutput(ns("surv_note")),
-      shiny::numericInput(ns("n"), "Number of runs", 1000, min = 50, max = 10000, step = 100),
-      shiny::numericInput(ns("seed"), "Random seed", 2026),
-      shiny::numericInput(ns("cores"), paste0("Parallel workers (1 to ", max_cores, ")"), 1,
+      shiny::numericInput(ns("n"), help_label("Number of runs", "How many random draws are made. More runs give a steadier answer but take longer. In the browser, start with 100 to 200."), 1000, min = 50, max = 10000, step = 100),
+      shiny::numericInput(ns("seed"), help_label("Random seed", "Fixes the random numbers, so the same settings always give the same results. Change it to check that the answer is stable."), 2026),
+      shiny::numericInput(ns("cores"), help_label(paste0("Parallel workers (1 to ", max_cores, ")"), "How many processors work at the same time. This speeds up big runs on your own computer. The browser version runs on one."), 1,
                           min = 1, max = max_cores, step = 1),
-      shiny::sliderInput(ns("cost_cv"), "Cost uncertainty (coefficient of variation, %)", 5, 50, 20),
-      shiny::sliderInput(ns("corr"), "Correlation of OS and PFS log-HRs", -0.9, 0.9, 0, step = 0.1),
+      shiny::sliderInput(ns("cost_cv"), help_label("Cost uncertainty (coefficient of variation, %)", "How much costs vary between draws, as a percentage of their value. A larger value gives a wider spread."), 5, 50, 20),
+      shiny::sliderInput(ns("corr"), help_label("Correlation of OS and PFS log-HRs", "How strongly the uncertainty in the OS and PFS hazard ratios moves together. 0 means they vary independently."), -0.9, 0.9, 0, step = 0.1),
       shiny::checkboxInput(ns("wane_on"), "Sample the waning start time", FALSE),
       shiny::conditionalPanel(
         sprintf("input['%s']", ns("wane_on")),
@@ -124,6 +130,12 @@ mod_psa_ui <- function(id) {
       shiny::actionButton(ns("run"), "Run PSA", class = "btn-primary"),
       shiny::helpText("Also sampled: entered log-HRs (normal), utilities (beta), costs (gamma).",
                       "The app is busy while the PSA runs.")
+    ),
+    intro_card(
+      purpose = "Measure how uncertain the result is when all the uncertain inputs vary together.",
+      do = "Choose how to include survival-curve uncertainty, set the number of runs, then click Run PSA. Start with a small number of runs as a test, then increase it.",
+      check = "The spread on the cost-effectiveness plane and the acceptability curve. Also that the convergence plot has flattened, which means more runs would not change the answer, and that the invalid-runs table at the bottom is understood.",
+      next_step = "the Export tab."
     ),
     shiny::uiOutput(ns("summary")),
     bslib::layout_columns(
@@ -260,6 +272,11 @@ mod_psa_server <- function(id, model, fits, ipd, code_dir) {
 mod_validation_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+    intro_card(
+      purpose = "Automated checks that show what you can trust and what still needs evidence.",
+      do = "Read the counts at the top, then go through the table. Look first at anything flagged as a problem.",
+      check = "For each warning, ask whether it could change the decision. If it could, fix it or test it as a scenario."
+    ),
     shiny::uiOutput(ns("counts")),
     bslib::card(bslib::card_header("Automated checks"), shiny::uiOutput(ns("table"))),
     bslib::card(

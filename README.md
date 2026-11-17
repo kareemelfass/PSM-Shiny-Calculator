@@ -8,6 +8,13 @@ The app runs entirely in your browser (R compiled to WebAssembly through [Shinyl
 
 All example data, the life table and default costs and utilities are synthetic or illustrative.
 
+## Built-in guidance
+
+- **Start here tab:** the workflow in 9 numbered steps, with a button that jumps to each tab, plus tips and a glossary.
+- **"About this tab" box** at the top of every tab: what it is for, what to do, what to check, and what comes next. Click to hide it.
+- **Info icons** next to inputs: click for a plain-language explanation.
+- All of this lives in `app/R/help.R`. It is interface text only and never changes the model.
+
 ## Repo layout
 
 - `app/` : the Shiny app (see `app/README.md` for the model documentation)
